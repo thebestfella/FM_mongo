@@ -5,9 +5,7 @@ mongoose.Promise = global.Promise;
 
 const connect = (url) => {
   return mongoose.connect(url, {
-    poolSize: 10,
-    bufferMaxEntries: 0,
-    reconnectTries: 5000,
+    poolSize: 15,
     useNewUrlParser: true,
     useUnifiedTopology: true,
   });
