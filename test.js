@@ -38,11 +38,50 @@ const student = new mongoose.Schema(
 
 //will put school on the student, make sure that's how you decalre an array
 const school = new mongoose.Schema({
-  name: String,
+  distric: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "district",
+  },
+  name: {
+    type: String,
+  },
   openSince: Number,
   students: Number,
   isGreat: Boolean,
   staff: [{ type: String }],
+});
+
+//need name to live uner district because there could be multiple "mlk" schools but just
+//under different school district
+school.index(
+  {
+    district: 1,
+    name: 1,
+  },
+  { unique: true }
+);
+
+//advanced customed validation before mongoose validation (sync func)
+school.pre("validate", function () {
+  console.log("before validate");
+});
+
+//after mangoose validation (async func - it asks 2 argument)
+school.post("save", function (doc, next) {
+  setTimeout(() => {
+    console.log("post save async", doc);
+    next();
+  }, 2000);
+});
+
+//school.pre("findOne",func...)
+//school.post("save", function () {
+
+//add Virtual getter, needs to be added before model creation
+//dont use arrow function
+school.virtual("staffCount").get(function () {
+  console.log("in virtual");
+  return this.staff.length;
 });
 
 //convert schema to mongoose/mongo model
@@ -73,10 +112,13 @@ connect()
       staff: ["d", "e", "f"],
     };
 
-    const school = await School.create([schoolConfig1, schoolConfig2]);
+    const school = await School.create(schoolConfig1);
     console.log(school);
-    const match = await School.findOne({ staff: "d" });
-    console.log(match);
+    console.log(school.staffCount);
+
+    //const match = await School.findOne({ staff: "d" });
+    //console.log(match);
+
     //const school = await School.create({ name: "MLK elementary" });
     // const student = await Student.create({
     //   firstName: "Tim10",
