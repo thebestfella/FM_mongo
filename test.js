@@ -1,7 +1,43 @@
 //entry point
 const mongoose = require("mongoose");
-
+const express = require("express");
 const Scheme = mongoose.Schema;
+const app = express();
+const morgan = require("morgan");
+const { urlencoded, json } = require("body-parser");
+const noteSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  body: {
+    type: String,
+    minlength: 10,
+  },
+});
+
+const Note = mongoose.model("note", noteSchema);
+
+app.use(morgan("dev"));
+app.use(urlencoded({ extended: true }));
+app.use(json());
+
+//(req,res) controller function
+app.get("/note", async (req, res) => {
+  //.lean() will only generate the mongo (not mongoose) obj
+  const notes = await Note.find({}).lean().exec();
+  res.status(200).json(notes);
+});
+
+app.post("/note", async (req, res) => {
+  const noteToBeCreated = req.body;
+  const note = await Note.create(noteToBeCreated);
+  res.status(201).json(note);
+
+  //lean version of mongo (instead of mongoose) obj
+  //res.status(201).json(note.toJSON());
+});
 
 //return a promoise
 const connect = () => {
@@ -95,40 +131,38 @@ const School = mongoose.model("school", school);
 const now = Date.now();
 connect()
   .then(async (connection) => {
+    app.listen(5000);
+
     //return a mongoose document, mongo however consumes and generates JSON
-
-    const schoolConfig1 = {
-      name: "MLK elementary",
-      openSince: 2009,
-      students: 1000,
-      isGreat: true,
-      staff: ["a", "b", "c"],
-    };
-    const schoolConfig2 = {
-      name: "Larry Middle School",
-      openSince: 1980,
-      students: 600,
-      isGreat: false,
-      staff: ["d", "e", "f"],
-    };
-
-    const school = await School.create(schoolConfig1);
-    console.log(school);
-    console.log(school.staffCount);
-
+    /*exercise for hooks*/
+    // const schoolConfig1 = {
+    //   name: "MLK elementary",
+    //   openSince: 2009,
+    //   students: 1000,
+    //   isGreat: true,
+    //   staff: ["a", "b", "c"],
+    // };
+    // const schoolConfig2 = {
+    //   name: "Larry Middle School",
+    //   openSince: 1980,
+    //   students: 600,
+    //   isGreat: false,
+    //   staff: ["d", "e", "f"],
+    // };
+    /*eof hooks exercise*/
+    // const school = await School.create(schoolConfig1);
+    // console.log(school);
+    // console.log(school.staffCount);
     //const match = await School.findOne({ staff: "d" });
     //console.log(match);
-
     //const school = await School.create({ name: "MLK elementary" });
     // const student = await Student.create({
     //   firstName: "Tim10",
     //   school: school._id, //noted use ._id here
     // });
-
     //populate will check if schema has ref, and it will find the ref
     // const match = await Student.findById(student.id).populate("school");
     // console.log(match);
-
     //other useful methods
     //const found = Student.find({ firstName: "" });
     //const foundById = Student.findById("");
